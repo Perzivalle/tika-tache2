@@ -325,6 +325,34 @@
           <maxRounds>3</maxRounds>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.pitest</groupId>
+        <artifactId>pitest-maven</artifactId>
+        <version>1.19.4</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.pitest</groupId>
+            <artifactId>pitest-junit5-plugin</artifactId>
+            <version>1.2.3</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <targetClasses>
+            <param>org.apache.tika.metadata.Metadata*</param>
+            <param>org.apache.tika.parser.multiple.AbstractMultipleParser*</param>
+          </targetClasses>
+          <targetTests>
+            <param>org.apache.tika.metadata.*</param>
+            <param>org.apache.tika.parser.multiple.*</param>
+          </targetTests>
+          <threads>2</threads>
+          <timestampedReports>false</timestampedReports>
+          <outputFormats>
+            <param>HTML</param>
+            <param>XML</param>
+          </outputFormats>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
   <reporting>
