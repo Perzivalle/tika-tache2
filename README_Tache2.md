@@ -1,6 +1,7 @@
 # Tâche 2 : génération de tests avec ChatUniTest et analyse de mutation avec pitest
 
-**Binôme :** BITULEANU Andrei, LITRE Paul  
+**Binôme :** BITULEANU Andrei, LITRE Paul 
+**Matricule :** 20275298        , 20267456
 **Cours :** IFT3913  
 **Date :** 12 octobre 2026
 
@@ -68,8 +69,8 @@ Finalement, sur ce même ordinateur, on arrive à générer 2 tests, 1 pour chaq
 Les logs de l'exécution sont à la racine du module tika-core et s'appellent :
 
 ```
-chatunitest-run1.log
-chatunitest-run2.log
+Log complet : [chatunitest-run1.log](tika-core/chatunitest-run1.log)
+Log complet : [chatunitest-run2.log](tika-core/chatunitest-run1.log)
 ```
 
 ### 3.2 Résultats par classe
@@ -90,21 +91,20 @@ chatunitest-run2.log
 
 ### 3.3 Synthèse de la génération
 
-La synthèse de tests avec ChatUniTest peut faire gagner un temps précieux en générant des tests pour nos classes, mais il est préférable de l'utiliser avec l'API d'OpenAI, à moins de posséder un PC très puissant ou beaucoup de temps, car sinon les temps de génération peuvent être très longs (~10 min pour chaque essai de génération d'un test) et les tests générés sont souvent de mauvaise qualité et ne compilent pas.
+La synthèse de tests avec ChatUniTest peut faire gagner un temps précieux en générant des tests pour nos classes, mais il est préférable de l'utiliser avec l'API d'OpenAI, à moins de posséder un PC très puissant ou beaucoup de temps, car sinon les temps de génération peuvent être très longs (~10 min pour chaque essai de génération d'un test) et les tests générés sont souvent de mauvaise qualité et ne compilent pas. C'est pourquoi nous avons utilisé le modèle chatgpt-4o qui n'est donc pas un modèle locale pour générer les tests. Ce sont les tests dans MetadataExtraTest et AbstractManualParserExtraTest 
 
 ---
 
 ## 4. Comparaison qualitative des oracles : IA contre tests écrits à la main
 
-| Aspect | Tests écrits à la main (existants) | Tests générés par l'IA |
+| Aspect | Tests écrits à la main (existants) | Tests écrits avec l'aide de l'IA (10 par classe) |
 |---|---|---|
-| Type d'assertions utilisées | assertEquals, assertThrows... | assertNotNull, assertTrue(true)... |
-| Précision des valeurs attendues | ... | ... |
-| Cas limites et erreurs couverts | ... | ... |
-| Vérifications triviales ou redondantes | ... | ... |
-| Lisibilité et nommage | ... | ... |
-
----
+| Type d'assertions utilisées | Surtout `assertEquals` (≈ 70 dans `TestMetadata`, ≈ 25 dans `MultipleParserTest`), puis `assertTrue`/`assertFalse`, `assertNull`, `assertNotNull`, `assertContains` ; `assertThrows` très rare (2 occurrences) | Plus variées : `assertEquals`, `assertArrayEquals`, `assertSame`, `assertNull`, `assertFalse`/`assertTrue` et surtout `assertThrows` (15 occurrences) pour vérifier les exceptions |
+| Précision des valeurs attendues | Valeurs concrètes et exactes (dates ISO, tableaux de valeurs, noms de classes des parseurs utilisés, textes produits par les parseurs) | Valeurs exactes également (valeur d'un `long` supérieur à `Integer.MAX_VALUE`, ordre des valeurs fusionnées, liste des types supportés), calculées à partir de la documentation et du code ; aucun test ne se contente de `assertNotNull` seul |
+| Cas limites et erreurs couverts | Cas nominaux bien couverts (ajout, lecture, suppression, dates avec ou sans fuseau, accès concurrents, limiteur d'écriture, politiques `FALLBACK` et `SUPPLEMENT`) ; peu de cas d'erreur | Cas limites et erreurs ciblés : entier absent, non numérique ou trop grand, mauvais type de propriété, ajout d'une 2ᵉ valeur à une propriété simple, `DISCARD_ALL` refusé par `SupplementingParser`, `RuntimeException` encapsulée, liste de parseurs non modifiable |
+| Vérifications triviales ou redondantes | Quelques redondances (`TestMetadata` répète plusieurs fois la même séquence d'`assertEquals`) ; `MultipleParserTest` n'a que 3 tests, donc beaucoup d'assertions par test | Pas de vérification triviale, mais un test peut mélanger plusieurs comportements (ex. `testToString`) ; certains chevauchent des tests existants (`testEqualsAndHashCodeForSameContent`) |
+| Lisibilité et nommage | Noms courts (`testAdd`, `testSet`, `testFallback`) ; tests longs qui vérifient plusieurs scénarios à la suite, donc plus difficiles à diagnostiquer en cas d'échec | Noms longs et explicites qui décrivent le comportement attendu (`testMergeFirstWinsKeepsOldOnClash`) ; un test = un comportement, avec des classes d'aide (`ScriptedParser`, `StopImmediatelyParser`) |
+| Faiblesses communes | Les deux jeux de tests ne vérifient pas la **valeur** de `hashCode` ni les appels de crochets internes (`parserPrepare`, `enableRewind`) : d'où les 10 mutants survivants du §5.5 | Idem : les mutants survivants du §5.5 restent vivants avec ces tests seuls, ce qui a motivé les tests manuels du §6 |
 
 ## 5. Analyse de mutation avec pitest
 
@@ -149,6 +149,8 @@ mvn org.pitest:pitest-maven:mutationCoverage -pl tika-core ...
 
 ### 5.2 Score de mutation avec les tests originaux uniquement
 
+![Résultat pitest avant l'ajout des tests](screenshot_20261012_180554.png)
+
 | Classe | Mutants générés | Tués | Survivants | Sans couverture | Score de mutation |
 |---|---|---|---|---|---|
 | `org.apache.tika.metadata.Metadata` | 150 | 96 | 5 | 49 | 64 % |
@@ -158,6 +160,8 @@ mvn org.pitest:pitest-maven:mutationCoverage -pl tika-core ...
 *Mesure faite avec pitest 1.19.4 sur `tika-core`, avant l'ajout de nos tests.*
 
 ### 5.3 Score de mutation avec les nouveaux tests (originaux + générés)
+
+![Résultat pitest après l'ajout des tests](screenshot_20261012_193718.png)
 
 | Classe | Mutants générés | Tués | Survivants | Sans couverture | Score de mutation | Évolution |
 |---|---|---|---|---|---|---|
@@ -328,6 +332,8 @@ assertSame(registry, parser.getMediaTypeRegistry());
 
 ### Score de mutation final
 
+![Résultat pitest après l'ajout des tests manuel](screenshot_20261012_200152.png)
+
 | Classe | Score avant tests manuels | Score après tests manuels |
 |---|---|---|
 | `Metadata` | 73 % (110/150) | 77 % (115/150) ; force des tests : 100 % |
@@ -336,4 +342,3 @@ assertSame(registry, parser.getMediaTypeRegistry());
 
 
 
----
