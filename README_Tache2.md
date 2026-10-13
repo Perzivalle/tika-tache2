@@ -68,10 +68,10 @@ Finalement, sur ce même ordinateur, on arrive à générer 2 tests, 1 pour chaq
 
 Les logs de l'exécution sont à la racine du module tika-core et s'appellent :
 
-```
-Log complet : [chatunitest-run1.log](tika-core/chatunitest-run1.log)
-Log complet : [chatunitest-run2.log](tika-core/chatunitest-run1.log)
-```
+
+Log Metadata : [chatunitest-run1.log](tika-core/chatunitest-run1.log)
+Log AbstractMultipleParser : [chatunitest-run2.log](tika-core/chatunitest-run2.log)
+
 
 ### 3.2 Résultats par classe
 
